@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="{% static 'bootstrap/js/jquery.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            <h1 class="center">注册界面</h1>
+            <form id="myform" novalidate>
+                {% csrf_token %}
+                {% for foo in form_obj %}
+                    <div class="form-group">
+                        <label for="{{ foo.auto_id }}">{{ foo.label }}</label>
+                        {{ foo }}
+                        <span style="color: red" class="pull-right"></span>
+                    </div>
+                {% endfor %}
+                <div class="form-group">
+                    <label for="myfile">头像
+                        <img id="myimg" src="{% static 'img/default.png' %}">
+                    </label>
+                    <input type="file" id="myfile" name="avatar" style="display: none">
+                    <input type="button" class="btn btn-success pull-right" value="注册" id="commit">
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    //选择文件，展示图片
+    $('#myfile').change(function () {
+        //产生一个文件阅读器对象
+        var fileReader = new FileReader();
+        //获取上传文件
+        var fileObj = $(this)[0].files[0];
+        //读取文件
+        fileReader.readAsDataURL(fileObj);
+        //展示文件
+        fileReader.onload = function () {
+            $('#myimg').attr('src', fileReader.result)
+        }
+    });
+    $('#commit').click(function () {
+        //要上传文件，所以要使用FormData对象
+        var formDataObj = new FormData();
+        //根据form的id，获取input的k，v值，.serializeArray()自动获取到内部所有的普通键值对
+        $.each($('#myform').serializeArray(), function (index, obj) {
+            formDataObj.append(obj.name, obj.value)
+        });
+        //添加文件数据
+        formDataObj.append('avatar', $('#myfile')[0].files[0]);
+
+        $.ajax({
+            url: '',
+            type: 'post',
+            data: formDataObj,
+
+            //发送文件要两个false
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                if (data.code == 1000) {
+                    location.href = data.url
+                } else {
+                    $.each(data.msg, function (index, obj) {
+                        var targetId = '#id_' + index;
+                        $(targetId).next().text(obj[0]).parent().addClass('has_error')
+                    })
+                }
+            }
+        });
+        $('input').focus(function () {
+            $(this).next().text('').parent().addClass('has_error')
+        })
+    })
+</script>
+</body>
+</html>
