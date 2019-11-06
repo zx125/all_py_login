@@ -130,3 +130,25 @@ STATICFILES_DIRS = [
 ]
 
 AUTH_USER_MODEL = 'app01.UserInfo'
+
+LOGIN_URL = '/login/'
+
+#配置额外的静态资源文件夹
+MEDIA_ROOT = os.path.join(BASE_DIR,'media')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.db.backends': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
+    }}

@@ -1,10 +1,11 @@
-from django.shortcuts import render,HttpResponse
+from django.shortcuts import render,HttpResponse,redirect
 from django.http import JsonResponse
 from app01 import myforms
 import random
 from app01 import models
 from  django.contrib import auth
 from io import BytesIO,StringIO
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 def register(request):
@@ -18,6 +19,7 @@ def register(request):
             clean_data = form_obj.cleaned_data
             clean_data.pop('confirm_password')
             file_obj = request.FILES.get('avatar')
+
             if file_obj:
                 clean_data['avatar'] = file_obj
             models.UserInfo.objects.create_user(**clean_data)
@@ -74,5 +76,75 @@ def get_code(request):
     img_obj.save(io_obj,'png')
     return HttpResponse(io_obj.getvalue())
 
+from utils.mypage import Pagination
 def home(request):
-    return render(request,'home.html')
+    #获取所有的文章数据
+    article_list = models.Article.objects.all()
+    #使用分页器
+    page_obj = Pagination(current_page=request.GET.get('page',1),all_count=article_list.count())
+    page_queryset = article_list[page_obj.start:page_obj.end]
+    return render(request,'home.html',locals())
+
+@login_required
+def login_out(request):
+    auth.logout(request)
+    return redirect('/login/')
+
+@login_required
+def set_password(request):
+    if request.is_ajax():
+        back_dic = {'code':1000,'msg':''}
+        if request.method == 'POST':
+            username = request.POST.get('username')
+            old_password = request.POST.get('old_password')
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+
+            #先校验两次密码是不是一致
+            if new_password == confirm_password:
+                #auth模块校验密码
+                is_right = request.user.check_password(old_password)
+                if is_right:
+                    #设置新密码
+                    request.user.set_password(new_password)
+                    request.user.save()
+                    back_dic['url'] = '/login/'
+                else:
+                    back_dic['code'] = 2000
+                    back_dic['msg'] = '源密码错误'
+            else:
+                back_dic['code'] = 3000
+                back_dic['msg'] = '两次密码不一致'
+            return JsonResponse(back_dic)
+
+def site(request,username,**kwargs):
+    user_obj = models.UserInfo.objects.filter(username=username).first()
+    if not user_obj:
+        return render(request,'error.html')
+
+    blog = user_obj.blog
+
+    #获取此用户的文章
+    article_list = models.Article.objects.filter(blog=blog)
+    if kwargs:
+        condition = kwargs.get('condition')
+        param = kwargs.get('param')
+        if condition == 'category':
+            article_list = article_list.filter(category_id=param)
+        elif condition == 'tag':
+            article_list =article_list.filter(tags=param)
+        else:
+            year,month = param.split('-')
+            article_list = article_list.filter(create_time__year=year,create_time__month=month)
+
+    #使用分页器
+    page_obj = Pagination(current_page=request.GET.get('page',1),all_count=article_list.count())
+    page_queryset = article_list[page_obj.start:page_obj.end]
+
+    return render(request,'site.html',locals())
+
+def article_detail(request,username,article_id):
+    article_obj = models.Article.objects.filter(pk=article_id).first()
+    comment_list = models.Comment.objects.filter(article=article_obj)
+    return render(request,'article_detail.html',locals())
+

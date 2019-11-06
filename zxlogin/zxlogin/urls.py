@@ -16,6 +16,8 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 from app01 import views
+from django.views.static import serve
+from zxlogin import settings
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -23,4 +25,11 @@ urlpatterns = [
     url(r'^login/', views.login),
     url(r'^home/', views.home),
     url(r'^get_code/', views.get_code),
+    url(r'^set_password/', views.set_password),
+    url(r'^login_out/', views.login_out),
+    url(r'^media/(?P<path>.*)',serve,{'document_root':settings.MEDIA_ROOT}),
+    url(r'^(?P<username>\w+)/$',views.site),
+    url(r'^(?P<username>\w+)/(?P<condition>category|tag|archive)/(?P<param>.*)',views.site),
+    url(r'^(?P<username>\w+)/article/(?P<article_id>\d+)',views.article_detail),
+    url(r'',views.home),
 ]

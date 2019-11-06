@@ -8,25 +8,34 @@ class UserInfo(AbstractUser):
     # upload_to 该字段用来存放用户上传的头像的文件地址 用户上传的头像会自动放到avatar文件夹下
     avatar = models.FileField(upload_to='avatar/', default='avatar/default.png')
     create_time = models.DateField(auto_now_add=True)
-
     blog = models.OneToOneField(to='Blog',null=True)
+    class Meta:
+        # verbose_name = '用户表'
+        verbose_name_plural = '用户表'
+
+    def __str__(self):
+        return self.username
 
 
 class Blog(models.Model):
     site_name = models.CharField(max_length=32)
     site_title = models.CharField(max_length=64)
     site_theme = models.CharField(max_length=64)  # 存css、js文件路径
-
+    def __str__(self):
+        return self.site_name
 
 class Category(models.Model):
     name = models.CharField(max_length=32)
     blog = models.ForeignKey(to='Blog',null=True)
+    def __str__(self):
+        return self.name
 
 
 class Tag(models.Model):
     name = models.CharField(max_length=32)
     blog = models.ForeignKey(to='Blog',null=True)
-
+    def __str__(self):
+        return self.name
 
 class Article(models.Model):
     title = models.CharField(max_length=64)
@@ -44,7 +53,8 @@ class Article(models.Model):
     blog = models.ForeignKey(to='Blog',null=True)
     tags = models.ManyToManyField(to='Tag', through='Article2Tag', through_fields=('article', 'tag'))
     category = models.ForeignKey(to='Category',null=True)
-
+    def __str__(self):
+        return self.title
 
 class Article2Tag(models.Model):
     article = models.ForeignKey(to='Article')
