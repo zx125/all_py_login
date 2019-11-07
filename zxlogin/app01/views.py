@@ -6,7 +6,7 @@ from app01 import models
 from  django.contrib import auth
 from io import BytesIO,StringIO
 from django.contrib.auth.decorators import login_required
-
+import json
 # Create your views here.
 def register(request):
     form_obj = myforms.MyRegForm()
@@ -147,4 +147,59 @@ def article_detail(request,username,article_id):
     article_obj = models.Article.objects.filter(pk=article_id).first()
     comment_list = models.Comment.objects.filter(article=article_obj)
     return render(request,'article_detail.html',locals())
+
+from django.db.models import F
+
+def UpAndDown(request):
+    print("sdasd")
+    if request.is_ajax():
+        if request.method == 'POST':
+            back_dic = {'code':1000,'msg':''}
+            #判断是否有用户登录，未登录不能点赞
+            if request.user.is_authenticated():
+                article_id = request.POST.get('article_id')
+                is_up = request.POST.get('is_up')
+                print(type(is_up))
+                is_up = json.loads(is_up)
+
+                article_obj = models.Article.objects.filter(pk=article_id).first()
+                print(article_obj)
+
+                #判断是不是当前用户的文章，自己不能给自己文章点赞
+                if not article_obj.blog.userinfo == request.user:
+                    #判断当前用户是否点过了
+                    is_click = models.UpAndDown.objects.filter(user=request.user,article=article_obj)
+                    if not is_click:
+                        if is_up:
+                            models.Article.objects.filter(pk=article_id).update(up_num = F('up_num')+1)
+                            back_dic['msg'] = '点赞成功'
+                        else:
+                            models.Article.objects.filter(pk=article_id).update(down_num=F('down_num') + 1)
+                            back_dic['msg'] = '点踩成功'
+                        models.UpAndDown.objects.create(user=request.user,article=article_obj,is_up=is_up)
+                    else:
+                        back_dic['code'] = 1001
+                        back_dic['msg'] = '你已经点过了'
+                else:
+                    back_dic['code'] = 1002
+                    back_dic['msg'] = '不能给自己的文章点赞'
+            else:
+                back_dic['code'] = 1003
+                back_dic['msg'] = '请先<a href="/login/">登录</a>'
+            return JsonResponse(back_dic)
+
+from django.db import transaction
+def comment(request):
+    if request.is_ajax():
+        if request.method == 'POST':
+            back_dic = {'code':1000,'msg':''}
+            article_id = request.POST.get('article_id')
+            content = request.POST.get('content')
+            parent_id = request.POST.get('parent_id')
+            with transaction.atomic():
+                models.Article.objects.filter(pk=article_id).update(comment_num = F('comment_num')+1)
+                models.Comment.objects.create(user=request.user,article_id=article_id,content=content,parent_id=parent_id)
+            back_dic['msg'] = '评论成功'
+            return JsonResponse(back_dic)
+
 

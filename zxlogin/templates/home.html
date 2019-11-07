@@ -98,7 +98,7 @@
             <ul class="media-list">
                 {% for article in page_queryset %}
                     <li class="media">
-                        <h4 class="media-heading">{{ article.title }}</h4>
+                         <a href="/{{ article.blog.userinfo.username }}/article/{{ article.pk }}"><h4 class="media-heading">{{ article.title }}</h4></a>
                         <div class="media-left">
                             <a href="/{{ article.blog.site_name }}/">
                                 <img class="media-object" src="/media/{{ article.blog.userinfo.avatar }}" width="60px" height="60px">

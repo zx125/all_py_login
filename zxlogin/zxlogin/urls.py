@@ -27,6 +27,9 @@ urlpatterns = [
     url(r'^get_code/', views.get_code),
     url(r'^set_password/', views.set_password),
     url(r'^login_out/', views.login_out),
+    url(r'^UpAndDown/', views.UpAndDown),
+    # 评论
+    url(r'^comment/', views.comment),
     url(r'^media/(?P<path>.*)',serve,{'document_root':settings.MEDIA_ROOT}),
     url(r'^(?P<username>\w+)/$',views.site),
     url(r'^(?P<username>\w+)/(?P<condition>category|tag|archive)/(?P<param>.*)',views.site),
